@@ -1,0 +1,6 @@
+include LICENSE README.md
+include REUSE_full_recording_GPU.ipynb
+recursive-include docs *.json
+recursive-include scripts *.py
+recursive-include tests *.py
+global-exclude *.pdf *.srt *.vtt *.flac *.mp3 *.m4a *.mp4 *.wav *.safetensors *.pyc

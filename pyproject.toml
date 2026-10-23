@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=77", "packaging>=24.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eileen-chang-clean-up"
+version = "0.1.0"
+description = "A reproducible NVIDIA RE-USE audio cleanup workflow for an Eileen Chang archival recording"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = ["numpy>=1.26,<3", "soundfile>=0.12,<0.14"]
+
+[project.optional-dependencies]
+gpu = [
+  "torch==2.10.0", "torchvision==0.25.0", "torchaudio==2.10.0",
+  "einops>=0.8,<0.9", "PyYAML>=6,<7", "safetensors>=0.5,<0.8",
+  "huggingface_hub>=0.34,<1", "transformers>=4.44,<5",
+  "packaging>=24,<27", "ninja>=1.11,<2",
+]
+dev = ["build>=1,<2"]
+
+[project.scripts]
+eileen-cleanup = "eileen_cleanup.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
