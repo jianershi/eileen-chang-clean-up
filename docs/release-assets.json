@@ -1,5 +1,5 @@
 {
-  "validated_on": "2026-10-23",
+  "validated_on": "2026-10-26",
   "scope": "Audio restoration only. Both assets cover the full source, including the subsequent seminar.",
   "recording": {
     "player_url": "https://mps.lib.harvard.edu/sds/audio/503996508",
@@ -10,17 +10,23 @@
     "permission": "Noncommercial reuse with attribution. See README.md."
   },
   "enhancement": {
-    "model": "nvidia/RE-USE",
-    "revision": "0ee310117ef0ae1e652654c821cf140bdcdc8415",
-    "model_weights_sha256": "87a4a970ce9aa79d5d92e71899ab034defcf13d93e5e4393ec0dc7db6d4ec048",
-    "historical_method": "Original completed Colab T4 run: float32 inference, 20-second cores, 2-second context, PCM16 checkpoints, one-second crossfades; dynamic normalization; 44.1 kHz mono FLAC.",
-    "flac_provenance": "Retained unchanged from the original successful GPU restoration; not regenerated with the refactored adapter.",
-    "m4a_provenance": "Encoded from the retained full FLAC on 2026-10-23 using FFmpeg native AAC at 192 kb/s; no further speech enhancement.",
-    "refactored_gpu_revalidated": false
+    "model": "nvidia/NVIDIA-NemotronLabs-RE-USE",
+    "revision": "31f82f2efad1095034492f236e8dac9239ba713b",
+    "model_weights_sha256": "06badaf4029b297f97f7fe48d62990b48d5482608210df577354e0d4e0ed70e1",
+    "method": "float32 CUDA RE-USE; 60 Hz high-pass; aligned raised-cosine crossfades; two-pass loudness normalization",
+    "environment": {
+      "gpu": "Tesla T4",
+      "torch": "2.10.0+cu130"
+    },
+    "gpu_run_complete": true,
+    "elapsed_seconds": 7236.804373867999,
+    "checkpoint_format": "float32 WAV",
+    "flac_provenance": "Full Colab restoration, downloaded and independently verified on 2026-10-26.",
+    "m4a_provenance": "Encoded from the full NemotronLabs FLAC, downloaded and independently verified on 2026-10-26."
   },
   "assets": [
     {
-      "file": "NVIDIA_REUSE_full_recording.flac",
+      "file": "NVIDIA_NemotronLabs_REUSE_full_recording.flac",
       "samples": 278298479,
       "sample_rate": 44100,
       "channels": 1,
@@ -28,24 +34,76 @@
       "decoded_duration_seconds": 6310.623106575964,
       "codec": "flac",
       "peak": 0.7080000638961792,
-      "bytes": 447572415,
-      "sha256": "0198af9e72348f243d1bf171d7adc702aecdf7a467f76ffb0556b77042bad4f5",
+      "bytes": 462956133,
+      "sha256": "0b3eb40a6ee3f9764aa7b55112e2b1aff271ee7f50b01142377268d2190d59df",
       "finite_samples": true,
       "full_decode": "passed"
     },
     {
-      "file": "NVIDIA_REUSE_full_recording.m4a",
-      "samples": 278298479,
+      "file": "NVIDIA_NemotronLabs_REUSE_full_recording.m4a",
+      "samples": 278298624,
       "sample_rate": 44100,
       "channels": 1,
-      "duration_seconds": 6310.623107,
-      "decoded_duration_seconds": 6310.623106575964,
+      "duration_seconds": 6310.622993,
+      "decoded_duration_seconds": 6310.626394557823,
       "codec": "aac",
-      "peak": 0.7168017029762268,
-      "bytes": 119542606,
-      "sha256": "e4941656cfae20d162c15b912a1c29ee19b44f519e21dc796b6cfc5a79efbd68",
+      "peak": 0.7733094096183777,
+      "bytes": 123687736,
+      "sha256": "b072719f56de6a7663d624b56b391d5e20a04e263c760195e818991d3ed4201e",
       "finite_samples": true,
       "full_decode": "passed"
     }
-  ]
+  ],
+  "independent_validation": {
+    "hashes_match_download": true,
+    "full_flac_decode": "passed",
+    "full_aac_decode": "passed",
+    "flac_samples": 278298479,
+    "audio_alignment_checkpoints": 7,
+    "minimum_flac_aac_correlation": 0.9999633785495539,
+    "aac_local_decoded_samples": 278298474,
+    "aac_note": "Decoder padding/trimming can change the decoded sample count slightly. Continuous decoding aligns with the FLAC."
+  },
+  "previous_restoration": {
+    "validated_on": "2026-10-23",
+    "enhancement": {
+      "model": "nvidia/RE-USE",
+      "revision": "0ee310117ef0ae1e652654c821cf140bdcdc8415",
+      "model_weights_sha256": "87a4a970ce9aa79d5d92e71899ab034defcf13d93e5e4393ec0dc7db6d4ec048",
+      "historical_method": "Original completed Colab T4 run: float32 inference, 20-second cores, 2-second context, PCM16 checkpoints, one-second crossfades; dynamic normalization; 44.1 kHz mono FLAC.",
+      "flac_provenance": "Retained unchanged from the original successful GPU restoration; not regenerated with the refactored adapter.",
+      "m4a_provenance": "Encoded from the retained full FLAC on 2026-10-23 using FFmpeg native AAC at 192 kb/s; no further speech enhancement.",
+      "refactored_gpu_revalidated": false
+    },
+    "assets": [
+      {
+        "file": "NVIDIA_REUSE_full_recording.flac",
+        "samples": 278298479,
+        "sample_rate": 44100,
+        "channels": 1,
+        "duration_seconds": 6310.623107,
+        "decoded_duration_seconds": 6310.623106575964,
+        "codec": "flac",
+        "peak": 0.7080000638961792,
+        "bytes": 447572415,
+        "sha256": "0198af9e72348f243d1bf171d7adc702aecdf7a467f76ffb0556b77042bad4f5",
+        "finite_samples": true,
+        "full_decode": "passed"
+      },
+      {
+        "file": "NVIDIA_REUSE_full_recording.m4a",
+        "samples": 278298479,
+        "sample_rate": 44100,
+        "channels": 1,
+        "duration_seconds": 6310.623107,
+        "decoded_duration_seconds": 6310.623106575964,
+        "codec": "aac",
+        "peak": 0.7168017029762268,
+        "bytes": 119542606,
+        "sha256": "e4941656cfae20d162c15b912a1c29ee19b44f519e21dc796b6cfc5a79efbd68",
+        "finite_samples": true,
+        "full_decode": "passed"
+      }
+    ]
+  }
 }

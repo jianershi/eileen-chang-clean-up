@@ -7,7 +7,7 @@ Outputs preserve the complete input recording. The full archival input is approx
 - `outputs/NVIDIA_NemotronLabs_REUSE_full_recording.flac` — lossless, 44.1 kHz mono master.
 - `outputs/NVIDIA_NemotronLabs_REUSE_full_recording.m4a` — smaller AAC listening copy at 192 kb/s.
 
-Audio files are ignored by Git and can be shared separately as release attachments. [docs/release-assets.json](docs/release-assets.json) records the previous original-RE-USE outputs; new runs produce their own verification metadata.
+Audio files are ignored by Git and can be shared separately as release attachments. Checksums and validation results for both restorations are in [docs/release-assets.json](docs/release-assets.json).
 
 ## Google Colab
 
@@ -46,7 +46,7 @@ python -m eileen_cleanup m4a outputs/NVIDIA_NemotronLabs_REUSE_full_recording.fl
 
 The workflow uses a 60 Hz high-pass filter, float32 NemotronLabs RE-USE inference with 20-second cores and 2-second context, one-second crossfade margins, and measured loudness normalization targeting -20 LUFS. The model revision is pinned in `src/eileen_cleanup/profile.py`; model files download separately. Checkpoints support validated resumption.
 
-The new model is pinned to revision `31f82f2efad1095034492f236e8dac9239ba713b`. Short comparisons ran successfully on NVIDIA's GPU demo; a full Colab run is still pending. Its separate cache and output names preserve the earlier restoration. Enhancement may introduce artifacts, so keep the original for comparison.
+The new model is pinned to revision `31f82f2efad1095034492f236e8dac9239ba713b`. The full 105-minute Colab run completed on a Tesla T4 with Torch 2.10.0+cu130; both exports were independently verified after download. Its separate cache and output names preserve the earlier restoration. Enhancement may introduce artifacts, so keep the original for comparison.
 
 ## License and credits
 
