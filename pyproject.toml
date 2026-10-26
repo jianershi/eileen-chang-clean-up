@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eileen-chang-clean-up"
-version = "0.1.0"
-description = "A reproducible NVIDIA RE-USE audio cleanup workflow for an Eileen Chang archival recording"
+version = "0.2.0"
+description = "A reproducible NVIDIA NemotronLabs RE-USE audio cleanup workflow for an Eileen Chang archival recording"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

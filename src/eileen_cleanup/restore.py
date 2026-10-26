@@ -11,7 +11,7 @@ import soundfile as sf
 
 from .chunks import Chunk, checkpoint_paths, join_chunks, plan_chunks
 from .common import check_output, probe, require_program, run, sha256, write_json
-from .profile import MODEL_REPOSITORY, MODEL_REVISION, SAMPLE_RATE, SOURCE_NOTICE, TITLE
+from .profile import MODEL_REPOSITORY, MODEL_REVISION, OUTPUT_STEM, SAMPLE_RATE, SOURCE_NOTICE, TITLE
 
 PIPELINE_VERSION = 1
 
@@ -121,9 +121,9 @@ def restore_audio(source, output_dir, work_dir, core_seconds=20.0, context_secon
 
     require_program("ffmpeg")
     source, output_dir, work_dir = Path(source).resolve(), Path(output_dir), Path(work_dir)
-    output = output_dir / "NVIDIA_REUSE_full_recording.flac"
+    output = output_dir / f"{OUTPUT_STEM}.flac"
     check_output(output, overwrite, source)
-    check_output(output_dir / "NVIDIA_REUSE_full_recording.m4a", overwrite, source)
+    check_output(output_dir / f"{OUTPUT_STEM}.m4a", overwrite, source)
     source_hash = sha256(source)
     duration = float(probe(source)["format"]["duration"])
     if expected_duration is not None and abs(duration - expected_duration) > 1:
@@ -171,9 +171,11 @@ def finalize_audio(work_dir, output_dir, overwrite=False, elapsed_seconds=None):
     """Joining and export can run on a CPU after all GPU windows have finished."""
     work_dir, output_dir = Path(work_dir), Path(output_dir)
     manifest = json.loads((work_dir / "manifest.json").read_text())
-    output = output_dir / "NVIDIA_REUSE_full_recording.flac"
+    if manifest.get("model") != MODEL_REPOSITORY:
+        raise ValueError("This cache belongs to a different model. Use a new work directory for NemotronLabs.")
+    output = output_dir / f"{OUTPUT_STEM}.flac"
     check_output(output, overwrite)
-    check_output(output_dir / "NVIDIA_REUSE_full_recording.m4a", overwrite)
+    check_output(output_dir / f"{OUTPUT_STEM}.m4a", overwrite)
     rows = []
     for original in manifest["chunks"]:
         chunk = Chunk(**{key: original[key] for key in Chunk.__dataclass_fields__})
@@ -192,7 +194,7 @@ def finalize_audio(work_dir, output_dir, overwrite=False, elapsed_seconds=None):
         raise ValueError("Export changed the recording's sample count.")
     from .export import export_m4a
 
-    playback = export_m4a(output, output_dir / "NVIDIA_REUSE_full_recording.m4a", overwrite=overwrite)
+    playback = export_m4a(output, output_dir / f"{OUTPUT_STEM}.m4a", overwrite=overwrite)
     report = {key: value for key, value in manifest.items() if key != "chunks"}
     report.update({"normalization_measurements": values, "verification": checks,
                    "m4a_verification": playback,

@@ -19,8 +19,8 @@ import soundfile as sf
 from eileen_cleanup.chunks import checkpoint_paths, join_chunks, plan_chunks
 from eileen_cleanup.common import probe
 from eileen_cleanup.export import export_m4a
-from eileen_cleanup.profile import SOURCE_NOTICE
-from eileen_cleanup.restore import bind_run, enhance_chunks, normalize_master, restore_audio
+from eileen_cleanup.profile import MODEL_REPOSITORY, SOURCE_NOTICE
+from eileen_cleanup.restore import bind_run, enhance_chunks, finalize_audio, normalize_master, restore_audio
 from eileen_cleanup.verify import verify_audio
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -78,12 +78,19 @@ class CheckpointTests(unittest.TestCase):
         self.assertEqual(len(rows), len(chunks))
 
     def test_cache_refuses_changed_input_or_configuration(self):
-        config = {"source_sha256": "example-a", "core_seconds": 20}
+        config = {"source_sha256": "example-a", "core_seconds": 20, "model": MODEL_REPOSITORY}
         bind_run(self.root, config)
         bind_run(self.root, config)
-        for changed in ({**config, "source_sha256": "example-b"}, {**config, "core_seconds": 10}):
+        for changed in ({**config, "source_sha256": "example-b"}, {**config, "core_seconds": 10},
+                        {**config, "model": "nvidia/RE-USE"}):
             with self.assertRaisesRegex(ValueError, "different source or configuration"):
                 bind_run(self.root, changed)
+
+    def test_finalize_refuses_previous_model_checkpoints(self):
+        (self.root / "manifest.json").write_text(json.dumps({"model": "nvidia/RE-USE"}))
+        with self.assertRaisesRegex(ValueError, "different model"):
+            finalize_audio(self.root, self.root / "outputs")
+        self.assertFalse((self.root / "outputs").exists())
 
     def test_orphan_cache_is_not_attached_to_another_input(self):
         (self.root / "prepared.wav").write_bytes(b"unfinished")

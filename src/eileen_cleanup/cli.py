@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from .profile import MODEL_REVISION
+from .profile import MODEL_REVISION, OUTPUT_STEM
 
 
 def parser():
@@ -15,7 +15,7 @@ def parser():
     restore = commands.add_parser("restore", help="Run/resume GPU enhancement and export FLAC and M4A.")
     restore.add_argument("source", type=Path)
     restore.add_argument("--output-dir", type=Path, default=Path("outputs"))
-    restore.add_argument("--work-dir", type=Path, default=Path("work/restoration"))
+    restore.add_argument("--work-dir", type=Path, default=Path("work/nemotron-restoration"))
     restore.add_argument("--core-seconds", type=float, default=20.)
     restore.add_argument("--context-seconds", type=float, default=2.)
     restore.add_argument("--overlap-seconds", type=float, default=1.)
@@ -24,12 +24,12 @@ def parser():
                          help="Optional expected duration, in seconds, for your source.")
     restore.add_argument("--overwrite", action="store_true")
     finalize = commands.add_parser("finalize", help="Join completed checkpoints and export both audio formats on a CPU.")
-    finalize.add_argument("--work-dir", type=Path, default=Path("work/restoration"))
+    finalize.add_argument("--work-dir", type=Path, default=Path("work/nemotron-restoration"))
     finalize.add_argument("--output-dir", type=Path, default=Path("outputs"))
     finalize.add_argument("--overwrite", action="store_true")
     playback = commands.add_parser("m4a", help="Encode a smaller AAC/M4A copy from an existing restored FLAC.")
     playback.add_argument("source", type=Path)
-    playback.add_argument("--output", type=Path, default=Path("outputs/NVIDIA_REUSE_full_recording.m4a"))
+    playback.add_argument("--output", type=Path, default=Path("outputs") / f"{OUTPUT_STEM}.m4a")
     playback.add_argument("--bitrate", default="192k")
     playback.add_argument("--overwrite", action="store_true")
     verify = commands.add_parser("verify", help="Decode and check a complete FLAC or M4A.")

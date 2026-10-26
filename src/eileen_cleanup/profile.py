@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: MIT
-"""Public source identifiers and the settings of the completed restoration."""
+"""Public source identifiers and the default restoration settings."""
 
 SAMPLE_RATE = 44_100
-MODEL_REPOSITORY = "nvidia/RE-USE"
-MODEL_REVISION = "0ee310117ef0ae1e652654c821cf140bdcdc8415"
-MODEL_WEIGHTS_SHA256 = "87a4a970ce9aa79d5d92e71899ab034defcf13d93e5e4393ec0dc7db6d4ec048"
+MODEL_REPOSITORY = "nvidia/NVIDIA-NemotronLabs-RE-USE"
+MODEL_REVISION = "31f82f2efad1095034492f236e8dac9239ba713b"
+MODEL_WEIGHTS_SHA256 = "06badaf4029b297f97f7fe48d62990b48d5482608210df577354e0d4e0ed70e1"
 ARCHIVE_URL = "https://hollisarchives.lib.harvard.edu/catalog/sch01475_sch01475c00589"
 AUDIO_URL = "https://mps.lib.harvard.edu/sds/audio/503996508"
 CITATION_GUIDE_URL = "https://guides.library.harvard.edu/schlesinger/citation_guide"
@@ -17,4 +17,5 @@ SOURCE_NOTICE = (
     "Schlesinger Library on the History of Women in America, Harvard Radcliffe Institute."
 )
 
-TITLE = "Bunting Institute Seminars — NVIDIA RE-USE restoration"
+OUTPUT_STEM = "NVIDIA_NemotronLabs_REUSE_full_recording"
+TITLE = "Bunting Institute Seminars — NVIDIA NemotronLabs RE-USE restoration"
