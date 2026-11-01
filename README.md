@@ -48,6 +48,24 @@ The workflow uses a 60 Hz high-pass filter, float32 NemotronLabs RE-USE inferenc
 
 The new model is pinned to revision `31f82f2efad1095034492f236e8dac9239ba713b`. The full 105-minute Colab run completed on a Tesla T4 with Torch 2.10.0+cu130; both exports were independently verified after download. Its separate cache and output names preserve the earlier restoration. Enhancement may introduce artifacts, so keep the original for comparison.
 
+## Transcription comparison
+
+We compared the raw source and four restorations against the published main speech cited below: original recording **02:31.27–39:35.07**, with **4,261 normalized reference words**. This evaluation covers the main speech only, excluding the introduction, Q&A and subsequent seminar.
+
+**Word Error Rate (WER)** is the number of substitutions, deletions and insertions divided by the reference word count. Lower is better.
+
+| Audio | Word errors | Word Error Rate (WER) | Substitutions | Deletions | Insertions |
+|---|---:|---:|---:|---:|---:|
+| Raw source (no enhancement) | 856 | 20.09% | 517 | 205 | 134 |
+| Original NVIDIA RE-USE | 814 | 19.10% | 542 | 151 | 121 |
+| **NVIDIA NemotronLabs RE-USE** | **788** | **18.49%** | 501 | 153 | 134 |
+| UniPASE | 824 | 19.34% | 535 | 160 | 129 |
+| Cisco StuPASE | 893 | 20.96% | 616 | 151 | 126 |
+
+All five used Whisper large-v3 with the same 82 time windows, CPU int8, beam size 5, temperature 0 and English recognition, with no VAD, text prompts or previous-text conditioning. The reference was used only for scoring.
+
+The raw source was decoded and resampled only; the restored outputs include their existing preparation and loudness processing. These scores compare the resulting audio files, rather than isolated model architectures. They measure transcription errors against an edited publication, which may differ from the delivered speech; they are not hallucination rates or human listening scores.
+
 ## License and credits
 
 Project code: [MIT](LICENSE). NVIDIA's model and implementation use [OpenMDW 1.1](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE/blob/31f82f2efad1095034492f236e8dac9239ba713b/LICENSE), which permits commercial use. The archival audio retains its separate terms below.
