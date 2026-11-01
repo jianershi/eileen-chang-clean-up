@@ -54,13 +54,15 @@ We compared the raw source and four restorations against the published main spee
 
 **Word Error Rate (WER)** is the number of substitutions, deletions and insertions divided by the reference word count. Lower is better.
 
-| Audio | Word errors | Word Error Rate (WER) | Substitutions | Deletions | Insertions |
-|---|---:|---:|---:|---:|---:|
-| Raw source (no enhancement) | 856 | 20.09% | 517 | 205 | 134 |
-| Original NVIDIA RE-USE | 814 | 19.10% | 542 | 151 | 121 |
-| **NVIDIA NemotronLabs RE-USE** | **788** | **18.49%** | 501 | 153 | 134 |
-| UniPASE | 824 | 19.34% | 535 | 160 | 129 |
-| Cisco StuPASE | 893 | 20.96% | 616 | 151 | 126 |
+| Audio | Model version (revision) | Word errors | Word Error Rate (WER) | Substitutions | Deletions | Insertions |
+|---|---|---:|---:|---:|---:|---:|
+| Raw source (no enhancement) | — | 856 | 20.09% | 517 | 205 | 134 |
+| Original NVIDIA RE-USE | [`0ee3101`](https://huggingface.co/nvidia/RE-USE/tree/0ee310117ef0ae1e652654c821cf140bdcdc8415) | 814 | 19.10% | 542 | 151 | 121 |
+| **NVIDIA NemotronLabs RE-USE** | [`31f82f2`](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE/tree/31f82f2efad1095034492f236e8dac9239ba713b) | **788** | **18.49%** | 501 | 153 | 134 |
+| UniPASE | [`f0b4d4c`](https://huggingface.co/Xiaobin-Rong/unipase/tree/f0b4d4c4411fe08fc2dddbf2d9f33260c27ac4a0) | 824 | 19.34% | 535 | 160 | 129 |
+| Cisco StuPASE | [`539963f`](https://huggingface.co/cisco-ai/stupase/tree/539963f425ae201ac8c379b6480e3b182a4840ad) | 893 | 20.96% | 616 | 151 | 126 |
+
+Versions identify the exact model repository revisions used, rather than release numbers. UniPASE used `enable_plc=True`; StuPASE used 8 steps, CFG 0.5 and sway -1.
 
 All five used Whisper large-v3 with the same 82 time windows, CPU int8, beam size 5, temperature 0 and English recognition, with no VAD, text prompts or previous-text conditioning. The reference was used only for scoring.
 
