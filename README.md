@@ -2,6 +2,8 @@
 
 Clean the archival recording of **Eileen Chang, “Chinese Translation: A Vehicle of Cultural Influence”** using [NVIDIA NemotronLabs RE-USE](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE) and FFmpeg.
 
+[![Watch Eileen Chang’s restored talk and Q&A on YouTube](https://i.ytimg.com/vi/F9ZVtb9nTkU/hqdefault.jpg)](https://www.youtube.com/watch?v=F9ZVtb9nTkU)
+
 Outputs preserve the complete input recording. The web MP3 runs approximately 105 minutes and includes a subsequent seminar. The archival WAV runs approximately 73 minutes. Standard output names:
 
 - `outputs/NVIDIA_NemotronLabs_REUSE_full_recording.flac` — lossless, 44.1 kHz mono master.
