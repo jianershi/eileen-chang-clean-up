@@ -2,7 +2,7 @@
 
 Clean the archival recording of **Eileen Chang, “Chinese Translation: A Vehicle of Cultural Influence”** using [NVIDIA NemotronLabs RE-USE](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE) and FFmpeg.
 
-Outputs preserve the complete input recording. The full archival input is approximately 105 minutes, including the subsequent seminar:
+Outputs preserve the complete input recording. The web MP3 runs approximately 105 minutes and includes a subsequent seminar. The archival WAV runs approximately 73 minutes. Standard output names:
 
 - `outputs/NVIDIA_NemotronLabs_REUSE_full_recording.flac` — lossless, 44.1 kHz mono master.
 - `outputs/NVIDIA_NemotronLabs_REUSE_full_recording.m4a` — smaller AAC listening copy at 192 kb/s.
@@ -18,6 +18,12 @@ Colab runs Jupyter `.ipynb` notebooks with an optional GPU.
 3. Upload your complete original audio when prompted, then download the new FLAC and M4A results.
 
 Colab's free GPU availability varies. Its default `/content/` storage is temporary; preserve the entire work directory to resume after a VM reset.
+
+## Kaggle
+
+We used Kaggle for background execution with **Save Version → Save & Run All**. Import the [laughter restoration notebook](REUSE_laughter_Kaggle.ipynb), keep it private, and attach the archival WAV as a private input dataset. Select **GPU T4 x2** and enable **Internet**. The workflow uses one T4 and saves FLAC and M4A under `/kaggle/working/reuse_laughter_outputs`.
+
+On a Tesla T4, the **1:12:45.67 archival WAV** took **1:08:27** for the laughter run and **1:12:00** for the standard run. These are the recorded times through inference, before final stitching, loudness normalization and export.
 
 ## Command line
 
@@ -50,23 +56,40 @@ The new model is pinned to revision `31f82f2efad1095034492f236e8dac9239ba713b`. 
 
 ## Transcription comparison
 
-We compared the raw source and four restorations against the published main speech cited below: original recording **02:31.27–39:35.07**, with **4,261 normalized reference words**. This evaluation covers the main speech only, excluding the introduction, Q&A and subsequent seminar.
+We scored the full main speech against **4,261 normalized reference words** from the published text cited below. The MP3 interval is **02:31.270–39:35.070** and the waveform-aligned WAV interval is **02:31.048–39:31.975**.
 
 **Word Error Rate (WER)** is the number of substitutions, deletions and insertions divided by the reference word count. Lower is better.
 
 | Audio | Model version (revision) | Word errors | Word Error Rate (WER) | Substitutions | Deletions | Insertions |
 |---|---|---:|---:|---:|---:|---:|
-| Raw source (no enhancement) | — | 856 | 20.09% | 517 | 205 | 134 |
+| Raw web MP3 | — | 856 | 20.09% | 517 | 205 | 134 |
 | Original NVIDIA RE-USE | [`0ee3101`](https://huggingface.co/nvidia/RE-USE/tree/0ee310117ef0ae1e652654c821cf140bdcdc8415) | 814 | 19.10% | 542 | 151 | 121 |
-| **NVIDIA NemotronLabs RE-USE** | [`31f82f2`](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE/tree/31f82f2efad1095034492f236e8dac9239ba713b) | **788** | **18.49%** | 501 | 153 | 134 |
+| NVIDIA NemotronLabs RE-USE from MP3 | [`31f82f2`](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE/tree/31f82f2efad1095034492f236e8dac9239ba713b) | 788 | 18.49% | 501 | 153 | 134 |
 | UniPASE | [`f0b4d4c`](https://huggingface.co/Xiaobin-Rong/unipase/tree/f0b4d4c4411fe08fc2dddbf2d9f33260c27ac4a0) | 824 | 19.34% | 535 | 160 | 129 |
 | Cisco StuPASE | [`539963f`](https://huggingface.co/cisco-ai/stupase/tree/539963f425ae201ac8c379b6480e3b182a4840ad) | 893 | 20.96% | 616 | 151 | 126 |
+| Raw archival WAV | — | 834 | 19.57% | 543 | 163 | 128 |
+| NemotronLabs from WAV | [`31f82f2`](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE/tree/31f82f2efad1095034492f236e8dac9239ba713b) | 808 | 18.96% | 552 | 128 | 128 |
+| **NemotronLabs laughter from WAV** | [`1b1521d`](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE-laughter/tree/1b1521dd659608e1e063ada83e0acfe1da473a8b) | 704 | **16.52%** | 461 | 119 | 124 |
+
+The laughter variant reduced WER by **2.44 percentage points** (104 fewer errors) compared with standard NemotronLabs on the same archival WAV.
 
 Versions identify the exact model repository revisions used, rather than release numbers. UniPASE used `enable_plc=True`; StuPASE used 8 steps, CFG 0.5 and sway -1.
 
-All five used Whisper large-v3 with the same 82 time windows, CPU int8, beam size 5, temperature 0 and English recognition, with no VAD, text prompts or previous-text conditioning. The reference was used only for scoring.
+All conditions used Whisper large-v3 with 82 matched speech windows, CPU int8, beam size 5, temperature 0 and English recognition, with no VAD, text prompts or previous-text conditioning. The reference was used only for scoring.
 
-The raw source was decoded and resampled only; the restored outputs include their existing preparation and loudness processing. These scores compare the resulting audio files, rather than isolated model architectures. They measure transcription errors against an edited publication, which may differ from the delivered speech; they are not hallucination rates or human listening scores.
+Both raw sources were decoded and resampled for recognition; the restored outputs include their existing preparation and loudness processing. These scores compare the resulting audio files, rather than isolated model architectures. They measure transcription errors against an edited publication, which may differ from the delivered speech; they are not hallucination rates or human listening scores.
+
+## Frequency comparison
+
+The plots show average spectral power for the closing speech, an audience question, and Eileen’s reply. Frequency increases from left to right on a logarithmic scale. Each comparison uses matched levels in the 300–3,000 Hz speech band. The Q&A panels use Eileen’s reply as the level reference.
+
+The dashed traces show the raw web MP3 and archival WAV. The solid traces show standard NemotronLabs RE-USE applied to each source. The raw traces overlap closely across most of the plotted speech range.
+
+![Average spectra of the raw MP3, archival WAV, and their standard NemotronLabs restorations](docs/source-and-restoration-spectra.png)
+
+Both restorations below use the archival WAV. The traces are close across much of the speech band. In the closing speech and Eileen’s reply, the standard model generally has more energy around 4–10 kHz. This band can contain consonant detail and noise.
+
+![Average spectra of standard and laughter NemotronLabs restorations from the same archival WAV](docs/standard-vs-laughter-spectra.png)
 
 ## License and credits
 
@@ -80,7 +103,10 @@ Project code: [MIT](LICENSE). NVIDIA's model and implementation use [OpenMDW 1.1
 
 Thanks to Schlesinger Library and its archivists for preserving and providing access to the recording, and to journalist **Chai Jing / 柴静** for reporting on its rediscovery: [substack](https://chaijing.substack.com/p/767), [YouTube note](https://www.youtube.com/post/UgkxVZFF41EiWCfXv78iSDDW0gkHSGkU02ue), [channel](https://www.youtube.com/@chaijing2023).
 
-Enhancement research: **Szu-Wei Fu et al.** “Rethinking Training Targets, Architectures and Data Quality for Universal Speech Enhancement” (2026). [Paper](https://arxiv.org/abs/2603.02641) · [NVIDIA NemotronLabs RE-USE](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE).
+Enhancement research for [NVIDIA NemotronLabs RE-USE](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE) and its [laughter variant](https://huggingface.co/nvidia/NVIDIA-NemotronLabs-RE-USE-laughter):
+
+- **Szu-Wei Fu et al.** “Rethinking Training Targets, Architectures and Data Quality for Universal Speech Enhancement” (2026). [arXiv:2603.02641](https://arxiv.org/abs/2603.02641)
+- **Szu-Wei Fu et al.** “One Model, Many Latencies: Universal Speech Enhancement for Diverse Real-Time Applications” (2026). [arXiv:2606.25621](https://arxiv.org/abs/2606.25621)
 
 Related scholarship: **EILEEN CHANG and CHRISTOPHER LEE.** “Chinese Translation: A Vehicle of Cultural Influence.” *PMLA* 130, no. 2 (2015): 488–98. [JSTOR](https://www.jstor.org/stable/44015733). Referenced for research; its text is not distributed here.
 
