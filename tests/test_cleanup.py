@@ -227,6 +227,128 @@ class SourceTests(unittest.TestCase):
             self.assertEqual(len(names), 4)
             self.assertTrue(all(Path(name).suffix not in (".mp3", ".flac", ".pdf", ".srt", ".safetensors") for name in names))
 
+    def test_unwrap_model_config_handles_flat_and_nested_laughter_configs(self):
+        from eileen_cleanup.model import unwrap_model_config
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            flat = {"model_cfg": {"d_state": 16}}
+            (root / "config.json").write_text(json.dumps(flat))
+            self.assertEqual(unwrap_model_config(root), flat)
+            (root / "config.json").write_text(json.dumps({"cfg": flat}))
+            self.assertEqual(unwrap_model_config(root), flat)
+
+    def test_cli_parses_ensemble_and_backend_flags(self):
+        from eileen_cleanup.cli import parser
+
+        args = parser().parse_args(["ensemble", "input.wav", "--backend", "mlx", "--shift-seconds", "10"])
+        self.assertEqual(args.command, "ensemble")
+        self.assertEqual(args.backend, "mlx")
+        self.assertEqual(args.shift_seconds, 10.0)
+
+
+@unittest.skipUnless(
+    shutil.which("ffmpeg") and shutil.which("ffprobe")
+    and importlib.util.find_spec("scipy") and importlib.util.find_spec("soxr"),
+    "FFmpeg, scipy, and soxr required",
+)
+class EnsembleTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        self.rate = 44_100
+        t = np.arange(self.rate * 8 + 137, dtype=np.float64) / self.rate
+        self.audio = ((.04 + .02 * np.sin(2 * np.pi * .7 * t)) *
+                      (np.sin(2 * np.pi * 437 * t) + .3 * np.sin(2 * np.pi * 1213 * t))).astype("float32")
+        self.source = self.root / "source.wav"
+        sf.write(self.source, self.audio, self.rate, subtype="FLOAT")
+
+    def tearDown(self):
+        self.temporary.cleanup()
+
+    def test_shifted_pass_identity_preserves_samples_and_values(self):
+        from eileen_cleanup.ensemble import run_resumable_pass
+
+        joined, info = run_resumable_pass(
+            self.source, self.root / "pass_shifted", self.rate,
+            "test/repo", "0" * 40,
+            core_seconds=3.0, context_seconds=1.0, overlap_seconds=0.5, shift_seconds=1.5,
+            enhancer_factory=lambda repo, rev, sr: (lambda x: x),
+        )
+        self.assertFalse(info["reused"])
+        out, rate = sf.read(joined, dtype="float32")
+        self.assertEqual(rate, self.rate)
+        self.assertEqual(len(out), len(self.audio))
+        np.testing.assert_allclose(out, self.audio, rtol=1e-4, atol=1e-5)
+
+    def test_gentle_wiener_and_linear_master_preserve_length(self):
+        from eileen_cleanup.ensemble import gentle_wiener_blockwise, normalize_linear_master
+
+        cleaned = gentle_wiener_blockwise(self.audio, sample_rate=self.rate, block_seconds=4.0, overlap_seconds=0.5)
+        self.assertEqual(len(cleaned), len(self.audio))
+        self.assertTrue(np.isfinite(cleaned).all())
+
+        master = self.root / "linear.flac"
+        norm = normalize_linear_master(self.source, master)
+        checks = verify_audio(master)
+        self.assertEqual(checks["samples"], len(self.audio))
+        self.assertLess(checks["peak"], .72)
+        self.assertTrue(np.isfinite(norm["linear_gain_db"]))
+
+    def test_ensemble_end_to_end_resume_and_pass1_reuse(self):
+        from eileen_cleanup.ensemble import restore_ensemble
+
+        calls = []
+
+        def factory(repo, rev, sr):
+            class Identity:
+                device_name = "test CPU identity"
+                torch_version = "test"
+
+                def __call__(self, audio):
+                    calls.append((repo, sr, len(audio)))
+                    return audio
+            return Identity()
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            report = restore_ensemble(
+                self.source, self.root / "out", self.root / "work",
+                core_seconds=3.0, context_seconds=1.0, overlap_seconds=0.5, shift_seconds=1.5,
+                enhancer_factory=factory,
+            )
+        self.assertEqual(report["verification"]["samples"], len(self.audio))
+        self.assertLess(report["verification"]["peak"], .72)
+        self.assertTrue(calls)
+        self.assertTrue((self.root / "out" / "REUSE_ensemble_full_recording.flac").exists())
+        self.assertTrue((self.root / "out" / "REUSE_ensemble_full_recording.m4a").exists())
+
+        # Resuming into the same work directory should run zero enhancement calls.
+        with contextlib.redirect_stdout(io.StringIO()):
+            resumed = restore_ensemble(
+                self.source, self.root / "out", self.root / "work",
+                core_seconds=3.0, context_seconds=1.0, overlap_seconds=0.5, shift_seconds=1.5,
+                overwrite=True,
+                enhancer_factory=lambda *a: (_ for _ in ()).throw(AssertionError("Cached passes should not rerun")),
+            )
+        self.assertEqual(resumed["verification"]["samples"], len(self.audio))
+
+        # Reusing pass1_joined into a fresh work directory should skip Pass 1 (44.1 kHz).
+        pass23_calls = []
+
+        def factory_no_44k(repo, rev, sr):
+            self.assertEqual(sr, 16_000)
+            return lambda x: (pass23_calls.append(sr) or x)
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            reused_p1 = restore_ensemble(
+                self.source, self.root / "out2", self.root / "work2",
+                core_seconds=3.0, context_seconds=1.0, overlap_seconds=0.5, shift_seconds=1.5,
+                pass1_joined=self.root / "work" / "pass1_44k_laughter" / "joined.wav",
+                enhancer_factory=factory_no_44k,
+            )
+        self.assertEqual(reused_p1["verification"]["samples"], len(self.audio))
+        self.assertTrue(pass23_calls)
+
 
 if __name__ == "__main__":
     unittest.main()

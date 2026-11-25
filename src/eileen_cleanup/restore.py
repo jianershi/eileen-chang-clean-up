@@ -116,8 +116,8 @@ def normalize_master(source, output, overwrite=False):
 
 def restore_audio(source, output_dir, work_dir, core_seconds=20.0, context_seconds=2.0,
                   overlap_seconds=1.0, revision=MODEL_REVISION,
-                  expected_duration=None, overwrite=False):
-    from .model import ReuseEnhancer, download_model
+                  expected_duration=None, overwrite=False, backend="cuda"):
+    from .model import ReuseEnhancer, download_model, load_enhancer
 
     require_program("ffmpeg")
     source, output_dir, work_dir = Path(source).resolve(), Path(output_dir), Path(work_dir)
@@ -155,7 +155,8 @@ def restore_audio(source, output_dir, work_dir, core_seconds=20.0, context_secon
     environment = previous.get("environment", {})
     if pending:
         model_dir, model_hash = download_model(work_dir / "model", revision)
-        enhancer = ReuseEnhancer(model_dir, SAMPLE_RATE)
+        enhancer = (ReuseEnhancer(model_dir, SAMPLE_RATE) if backend == "cuda"
+                    else load_enhancer(model_dir, SAMPLE_RATE, backend=backend))
         environment = {"gpu": enhancer.device_name, "torch": enhancer.torch_version}
     rows = enhance_chunks(prepared, chunks, checkpoint_dir, SAMPLE_RATE, enhancer,
                           progress=lambda row: print(json.dumps(row), flush=True))

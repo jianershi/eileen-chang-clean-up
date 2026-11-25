@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Bind to the separately downloaded NVIDIA model; no model code is vendored."""
+"""Bind to separately downloaded NVIDIA RE-USE checkpoints on CUDA or Apple Silicon MLX."""
 import importlib
 import json
 import re
@@ -9,23 +9,58 @@ from pathlib import Path
 import numpy as np
 
 from .common import sha256
-from .profile import MODEL_REPOSITORY, MODEL_REVISION, MODEL_WEIGHTS_SHA256
+from .profile import MODEL_REPOSITORY, MODEL_REVISION, PINNED_WEIGHTS_SHA256
 
 
-def download_model(directory, revision=MODEL_REVISION):
+def download_model(directory, revision=MODEL_REVISION, repository=MODEL_REPOSITORY, expected_sha256=None):
     if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
         raise ValueError("Use a full model commit hash, not a moving branch name.")
     from huggingface_hub import snapshot_download
 
     directory = Path(snapshot_download(
-        repo_id=MODEL_REPOSITORY, revision=revision, local_dir=str(directory),
+        repo_id=repository, revision=revision, local_dir=str(directory),
         allow_patterns=["models/*.py", "utils/*.py", "recipes/*.yaml", "config.json",
                         "model.safetensors", "README*", "LICENSE*"],
     ))
     digest = sha256(directory / "model.safetensors")
-    if revision == MODEL_REVISION and digest != MODEL_WEIGHTS_SHA256:
+    pinned = expected_sha256 if expected_sha256 is not None else PINNED_WEIGHTS_SHA256.get((repository, revision))
+    if pinned is not None and digest != pinned:
         raise ValueError("The downloaded model weights do not match the pinned checkpoint.")
     return directory, digest
+
+
+def unwrap_model_config(directory):
+    raw = json.loads((Path(directory) / "config.json").read_text())
+    return raw.get("cfg", raw)
+
+
+def resolve_backend(backend="auto"):
+    if backend not in ("auto", "cuda", "mlx"):
+        raise ValueError(f"Unsupported backend: {backend}. Choose auto, cuda, or mlx.")
+    if backend != "auto":
+        return backend
+    try:
+        import torch
+        if torch.cuda.is_available():
+            return "cuda"
+    except ImportError:
+        pass
+    try:
+        import mlx.core  # noqa: F401
+        return "mlx"
+    except ImportError:
+        pass
+    raise RuntimeError(
+        "No supported enhancement backend found. Use an NVIDIA CUDA GPU or install the [mlx] extra on Apple Silicon."
+    )
+
+
+def load_enhancer(directory, sample_rate, backend="auto"):
+    selected = resolve_backend(backend)
+    if selected == "cuda":
+        return ReuseEnhancer(directory, sample_rate)
+    from .mlx_backend import MlxReuseEnhancer
+    return MlxReuseEnhancer(directory, sample_rate)
 
 
 class ReuseEnhancer:
@@ -36,7 +71,7 @@ class ReuseEnhancer:
         from safetensors.torch import load_file
 
         if not torch.cuda.is_available():
-            raise RuntimeError("RE-USE needs a CUDA GPU. In Colab, select a T4 GPU runtime.")
+            raise RuntimeError("CUDA backend needs an NVIDIA GPU. On Apple Silicon, pass --backend mlx.")
         directory = Path(directory).resolve()
         # These names belong to NVIDIA's downloaded package. Avoid accidentally
         # binding to an unrelated top-level 'models' package in a notebook.
@@ -48,7 +83,7 @@ class ReuseEnhancer:
         sys.path.insert(0, str(directory))
         generator = importlib.import_module("models.generator_SEMamba_time_d4")
         transforms = importlib.import_module("models.stfts")
-        cfg = json.loads((directory / "config.json").read_text())
+        cfg = unwrap_model_config(directory)
         self.torch = torch
         self.network = generator.SEMamba(cfg)
         self.network.load_state_dict(load_file(str(directory / "model.safetensors")), strict=True)
